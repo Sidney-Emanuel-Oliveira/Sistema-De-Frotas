@@ -1,0 +1,5 @@
+﻿*.md
+*.csv
+target/
+.idea/
+*.iml
