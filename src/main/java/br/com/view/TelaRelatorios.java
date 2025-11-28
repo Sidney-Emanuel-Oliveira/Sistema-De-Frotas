@@ -11,6 +11,7 @@ import br.com.ui.ModernButton;
 import br.com.ui.ModernInnerTabbedPane;
 import br.com.ui.ModernComboBox;
 import br.com.utils.GeradorCSV;
+import br.com.utils.IconLoader;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -35,6 +36,7 @@ public class TelaRelatorios extends JPanel {
     private JTable tabelaRelatorio;
     private DefaultTableModel modeloTabela;
     private JLabel lblTitulo;
+    private JLabel lblTipoRelatorio;
 
     // Controle de relatório gerado
     private boolean relatorioGerado = false;
@@ -310,8 +312,37 @@ public class TelaRelatorios extends JPanel {
 
     private JPanel criarPainelRelatorios() {
         RoundedPanel panel = new RoundedPanel(8, ModernColors.WHITE);
-        panel.setLayout(new BorderLayout());
+        panel.setLayout(new BorderLayout(0, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        // Painel de título do relatório atual
+        JPanel tituloRelatorioPanel = new JPanel(new BorderLayout());
+        tituloRelatorioPanel.setOpaque(false);
+        tituloRelatorioPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+
+        lblTipoRelatorio = new JLabel("Selecione um tipo de relatório acima");
+        lblTipoRelatorio.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTipoRelatorio.setForeground(ModernColors.PRIMARY_BLUE);
+        lblTipoRelatorio.setHorizontalAlignment(SwingConstants.LEFT);
+
+        // Adicionar ícone de tabela PNG
+        ImageIcon tableIcon = IconLoader.loadTableIcon(20, 20);
+        JLabel iconRelatorio = new JLabel(tableIcon);
+
+        JPanel tituloComIcone = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        tituloComIcone.setOpaque(false);
+        tituloComIcone.add(iconRelatorio);
+        tituloComIcone.add(lblTipoRelatorio);
+
+        tituloRelatorioPanel.add(tituloComIcone, BorderLayout.WEST);
+
+        // Linha separadora
+        JSeparator separator = new JSeparator(JSeparator.HORIZONTAL);
+        separator.setForeground(ModernColors.BORDER_GRAY);
+        separator.setBackground(ModernColors.BORDER_GRAY);
+        tituloRelatorioPanel.add(separator, BorderLayout.SOUTH);
+
+        panel.add(tituloRelatorioPanel, BorderLayout.NORTH);
 
         JTabbedPane abas = new ModernInnerTabbedPane();
 
@@ -383,6 +414,12 @@ public class TelaRelatorios extends JPanel {
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar veículos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private void atualizarTituloRelatorio(String tipoRelatorio) {
+        tipoRelatorioAtual = tipoRelatorio;
+        lblTipoRelatorio.setText(tipoRelatorio);
+        relatorioGerado = true;
     }
 
     // ... Métodos de geração de relatórios
@@ -488,9 +525,8 @@ public class TelaRelatorios extends JPanel {
         modeloTabela.addRow(new Object[]{"", "", "", "", "TOTAL GERAL", String.format("R$ %.2f", totalGeral)});
         tabelaRelatorio.setModel(modeloTabela);
 
-        // Marcar que um relatório foi gerado
-        relatorioGerado = true;
-        tipoRelatorioAtual = "Despesas - Todos os Veículos";
+        // Atualizar título do relatório
+        atualizarTituloRelatorio("Despesas - Todos os Veículos");
     }
 
     private void preencherTabelaDespesasVeiculo(List<Movimentacao> movimentacoes, double total) {
@@ -565,9 +601,9 @@ public class TelaRelatorios extends JPanel {
         areaRelatorio.setText(sb.toString());
         preencherTabelaDespesasMes(movimentacoesMes, total);
 
-        // Marcar que um relatório foi gerado
-        relatorioGerado = true;
-        tipoRelatorioAtual = "Despesas por Mês";
+        // Atualizar título do relatório
+        String mesNome = java.time.Month.of(mes).getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("pt", "BR"));
+        atualizarTituloRelatorio("Despesas por Mês - " + mesNome + "/" + ano);
     }
 
     private void preencherTabelaDespesasMes(List<Movimentacao> movimentacoes, double total) {
@@ -645,9 +681,9 @@ public class TelaRelatorios extends JPanel {
         areaRelatorio.setText(sb.toString());
         preencherTabelaCombustivelMes(combustivelisMes, total);
 
-        // Marcar que um relatório foi gerado
-        relatorioGerado = true;
-        tipoRelatorioAtual = "Combustível por Mês";
+        // Atualizar título do relatório
+        String mesNome = java.time.Month.of(mes).getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("pt", "BR"));
+        atualizarTituloRelatorio("Combustível por Mês - " + mesNome + "/" + ano);
     }
 
     private void preencherTabelaCombustivelMes(List<Movimentacao> movimentacoes, double total) {
@@ -722,9 +758,8 @@ public class TelaRelatorios extends JPanel {
         areaRelatorio.setText(sb.toString());
         preencherTabelaIPVAAno(ipvasAno, total);
 
-        // Marcar que um relatório foi gerado
-        relatorioGerado = true;
-        tipoRelatorioAtual = "IPVA por Ano";
+        // Atualizar título do relatório
+        atualizarTituloRelatorio("IPVA por Ano - " + anoSelecionado);
     }
 
     private void preencherTabelaIPVAAno(List<Movimentacao> movimentacoes, double total) {
@@ -779,9 +814,8 @@ public class TelaRelatorios extends JPanel {
         areaRelatorio.setText(sb.toString());
         preencherTabelaVeiculosInativos(veiculosInativos);
 
-        // Marcar que um relatório foi gerado
-        relatorioGerado = true;
-        tipoRelatorioAtual = "Veículos Inativos";
+        // Atualizar título do relatório
+        atualizarTituloRelatorio("Veículos Inativos");
     }
 
     private void preencherTabelaVeiculosInativos(List<Veiculo> veiculos) {
@@ -847,9 +881,8 @@ public class TelaRelatorios extends JPanel {
         areaRelatorio.setText(sb.toString());
         preencherTabelaMultas(multas, total);
 
-        // Marcar que um relatório foi gerado
-        relatorioGerado = true;
-        tipoRelatorioAtual = "Multas por Veículo";
+        // Atualizar título do relatório
+        atualizarTituloRelatorio("Multas por Veículo");
     }
 
     private void preencherTabelaMultas(List<Movimentacao> movimentacoes, double total) {
@@ -928,6 +961,7 @@ public class TelaRelatorios extends JPanel {
         areaRelatorio.setText("");
         modeloTabela.setRowCount(0);
         lblTitulo.setText("Relatórios");
+        lblTipoRelatorio.setText("Selecione um tipo de relatório acima");
 
         // Resetar controle de relatório gerado
         relatorioGerado = false;
@@ -975,8 +1009,8 @@ public class TelaRelatorios extends JPanel {
 
         preencherTabelaMatriz(matrizA, veiculos, meses, "Matriz A - Abastecimentos");
 
-        relatorioGerado = true;
-        tipoRelatorioAtual = "Matriz A (Abastecimentos)";
+        // Atualizar título do relatório
+        atualizarTituloRelatorio("Matriz A - Quantidade de Abastecimentos por Veículo/Mês");
     }
 
     /**
@@ -1042,8 +1076,8 @@ public class TelaRelatorios extends JPanel {
 
         tabelaRelatorio.setModel(modeloTabela);
 
-        relatorioGerado = true;
-        tipoRelatorioAtual = "Matriz B (Custo Médio)";
+        // Atualizar título do relatório
+        atualizarTituloRelatorio("Matriz B - Custo Médio por Abastecimento/Marca");
     }
 
     /**
@@ -1112,8 +1146,8 @@ public class TelaRelatorios extends JPanel {
 
         tabelaRelatorio.setModel(modeloTabela);
 
-        relatorioGerado = true;
-        tipoRelatorioAtual = "Matriz C (Gasto Total)";
+        // Atualizar título do relatório
+        atualizarTituloRelatorio("Matriz C - Gasto Total de Abastecimento por Marca");
     }
 
     /**
@@ -1180,8 +1214,8 @@ public class TelaRelatorios extends JPanel {
 
         tabelaRelatorio.setModel(modeloTabela);
 
-        relatorioGerado = true;
-        tipoRelatorioAtual = "Relatório Completo de Matrizes";
+        // Atualizar título do relatório
+        atualizarTituloRelatorio("Relatório Completo - Todas as Matrizes (A, B e C)");
     }
 
     /**

@@ -5,6 +5,7 @@ import br.com.model.Veiculo;
 import br.com.ui.ModernColors;
 import br.com.ui.RoundedPanel;
 import br.com.ui.ModernButton;
+import br.com.ui.WrapLayout;
 import br.com.ui.components.VehicleCard;
 import br.com.ui.components.VehicleDetailsPanel;
 import br.com.utils.IconLoader;
@@ -109,7 +110,7 @@ public class TelaCadastroVeiculo extends JPanel {
 
     private JScrollPane criarPainelCards() {
         cardsPanel = new JPanel();
-        cardsPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 20));
+        cardsPanel.setLayout(new WrapLayout(FlowLayout.LEFT, 20, 20));
         cardsPanel.setBackground(ModernColors.BG_PRIMARY);
 
         JScrollPane scrollPane = new JScrollPane(cardsPanel);
@@ -117,6 +118,7 @@ public class TelaCadastroVeiculo extends JPanel {
         scrollPane.getViewport().setBackground(ModernColors.BG_PRIMARY);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         carregarCardsVeiculos(cardsPanel);
 

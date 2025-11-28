@@ -117,6 +117,13 @@ public class IconLoader {
     }
 
     /**
+     * Carrega ícone de tabela
+     */
+    public static ImageIcon loadTableIcon(int width, int height) {
+        return loadIcon("tabela.png", width, height);
+    }
+
+    /**
      * Carrega ícone baseado no tipo de veículo
      */
     public static ImageIcon loadIconForType(String tipo, int width, int height) {
