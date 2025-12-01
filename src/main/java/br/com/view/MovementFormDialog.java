@@ -339,31 +339,60 @@ public class MovementFormDialog extends JDialog {
 
     private void salvar() {
         try {
+            // Validar seleções
             Veiculo veiculoSelecionado = (Veiculo) cmbVeiculo.getSelectedItem();
             TipoDespesa tipoSelecionado = (TipoDespesa) cmbTipoDespesa.getSelectedItem();
 
-            if (veiculoSelecionado == null || tipoSelecionado == null) {
-                JOptionPane.showMessageDialog(this,
-                    "Selecione veículo e tipo de despesa!",
-                    "Erro",
-                    JOptionPane.ERROR_MESSAGE);
-                return;
+            if (veiculoSelecionado == null) {
+                throw new IllegalArgumentException("Selecione um veículo!");
             }
 
-            String descricao = txtDescricao.getText().trim();
-            String valor = txtValor.getText().trim();
+            if (tipoSelecionado == null) {
+                throw new IllegalArgumentException("Selecione um tipo de despesa!");
+            }
 
-            if (descricao.isEmpty() || valor.isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                    "Preencha todos os campos!",
-                    "Erro",
-                    JOptionPane.ERROR_MESSAGE);
-                return;
+            // Obter e validar campos
+            String descricao = txtDescricao.getText().trim();
+            String valorStr = txtValor.getText().trim();
+
+            if (descricao.isEmpty()) {
+                throw new IllegalArgumentException("A descrição é obrigatória!");
+            }
+
+            if (descricao.length() < 3) {
+                throw new IllegalArgumentException("A descrição deve ter pelo menos 3 caracteres!");
+            }
+
+            if (valorStr.isEmpty()) {
+                throw new IllegalArgumentException("O valor é obrigatório!");
+            }
+
+            // Validar formato do valor
+            double valorDouble;
+            try {
+                // Aceitar tanto vírgula quanto ponto como separador decimal
+                String valorNormalizado = valorStr.replace(",", ".");
+                valorDouble = Double.parseDouble(valorNormalizado);
+
+                if (valorDouble <= 0) {
+                    throw new IllegalArgumentException("O valor deve ser maior que zero!");
+                }
+
+                if (valorDouble > 1000000) {
+                    throw new IllegalArgumentException("O valor não pode ser maior que R$ 1.000.000,00!");
+                }
+
+                // Reformatar valor para o padrão usado no sistema
+                valorStr = String.format("%.2f", valorDouble).replace(".", ",");
+
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Valor inválido! Use o formato: 123.45 ou 123,45");
             }
 
             // Gerar data automática no formato dd/MM/yyyy
             String data = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
+            // Salvar movimentação
             if (movimentacaoEdicao != null) {
                 movimentacaoController.atualizarMovimentacao(
                     movimentacaoEdicao.getIdMovimentacao(),
@@ -371,11 +400,14 @@ public class MovementFormDialog extends JDialog {
                     tipoSelecionado.getIdTipoDespesa(),
                     descricao,
                     data,
-                    valor,
+                    valorStr,
                     tipoSelecionado.getDescricao()
                 );
                 JOptionPane.showMessageDialog(this,
-                    "Movimentação atualizada com sucesso!",
+                    "✅ Movimentação atualizada com sucesso!\n\n" +
+                    "Veículo: " + veiculoSelecionado.getPlaca() + "\n" +
+                    "Tipo: " + tipoSelecionado.getDescricao() + "\n" +
+                    "Valor: R$ " + valorStr,
                     "Sucesso",
                     JOptionPane.INFORMATION_MESSAGE);
             } else {
@@ -384,21 +416,39 @@ public class MovementFormDialog extends JDialog {
                     tipoSelecionado.getIdTipoDespesa(),
                     descricao,
                     data,
-                    valor,
+                    valorStr,
                     tipoSelecionado.getDescricao()
                 );
                 JOptionPane.showMessageDialog(this,
-                    "Movimentação cadastrada com sucesso!",
+                    "✅ Movimentação cadastrada com sucesso!\n\n" +
+                    "Veículo: " + veiculoSelecionado.getPlaca() + "\n" +
+                    "Tipo: " + tipoSelecionado.getDescricao() + "\n" +
+                    "Valor: R$ " + valorStr + "\n" +
+                    "Data: " + data,
                     "Sucesso",
                     JOptionPane.INFORMATION_MESSAGE);
             }
 
             if (onSuccess != null) onSuccess.run();
             dispose();
+
         } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Erro de Validação", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "❌ Erro de Validação:\n" + e.getMessage(),
+                "Erro de Validação",
+                JOptionPane.ERROR_MESSAGE);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao salvar: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "❌ Erro ao salvar movimentação:\n" + e.getMessage() +
+                "\n\nVerifique a conexão com o banco de dados.",
+                "Erro de Sistema",
+                JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "❌ Erro inesperado:\n" + e.getMessage(),
+                "Erro",
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 

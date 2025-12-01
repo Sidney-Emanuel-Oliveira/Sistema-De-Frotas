@@ -116,6 +116,9 @@ public class TelaMovimentacao extends JPanel {
 
                 cardsPanel.add(emptyPanel);
             } else {
+                // Ordenar movimentações por ID decrescente (mais recentes primeiro)
+                movimentacoes.sort((m1, m2) -> m2.getIdMovimentacao().compareTo(m1.getIdMovimentacao()));
+
                 // Criar cards para cada movimentação
                 for (Movimentacao m : movimentacoes) {
                     MovementCard card = new MovementCard(m);

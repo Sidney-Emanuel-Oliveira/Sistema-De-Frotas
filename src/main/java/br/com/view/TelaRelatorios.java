@@ -989,13 +989,27 @@ public class TelaRelatorios extends JPanel {
             return;
         }
 
+        // Obter ID do veículo selecionado (null se "Todos")
+        VeiculoComboItem itemSelecionado = (VeiculoComboItem) cmbVeiculo.getSelectedItem();
+        Long idVeiculoFiltro = (itemSelecionado != null && itemSelecionado.getVeiculo() != null)
+            ? itemSelecionado.getVeiculo().getIdVeiculo()
+            : null;
+
         String relatorio = relatoriosController.gerarRelatorioMatrizAComPeriodo(
-                mesInicial, anoInicial, mesFinal, anoFinal);
+                mesInicial, anoInicial, mesFinal, anoFinal, idVeiculoFiltro);
 
         areaRelatorio.setText(relatorio);
 
         // Preencher tabela
         List<Veiculo> veiculos = relatoriosController.obterTodosVeiculos();
+
+        // Aplicar filtro de veículo se um veículo específico foi selecionado
+        if (itemSelecionado != null && itemSelecionado.getVeiculo() != null) {
+            veiculos = veiculos.stream()
+                    .filter(v -> v.getIdVeiculo().equals(itemSelecionado.getVeiculo().getIdVeiculo()))
+                    .toList();
+        }
+
         List<Movimentacao> movimentacoes = relatoriosController.obterTodasMovimentacoes();
 
         // Filtrar movimentações por período
@@ -1010,7 +1024,10 @@ public class TelaRelatorios extends JPanel {
         preencherTabelaMatriz(matrizA, veiculos, meses, "Matriz A - Abastecimentos");
 
         // Atualizar título do relatório
-        atualizarTituloRelatorio("Matriz A - Quantidade de Abastecimentos por Veículo/Mês");
+        String tituloVeiculo = (itemSelecionado != null && itemSelecionado.getVeiculo() != null)
+            ? " - " + itemSelecionado.getVeiculo().getPlaca()
+            : "";
+        atualizarTituloRelatorio("Matriz A - Quantidade de Abastecimentos por Veículo/Mês" + tituloVeiculo);
     }
 
     /**
@@ -1032,13 +1049,27 @@ public class TelaRelatorios extends JPanel {
             return;
         }
 
+        // Obter ID do veículo selecionado (null se "Todos")
+        VeiculoComboItem itemSelecionado = (VeiculoComboItem) cmbVeiculo.getSelectedItem();
+        Long idVeiculoFiltro = (itemSelecionado != null && itemSelecionado.getVeiculo() != null)
+            ? itemSelecionado.getVeiculo().getIdVeiculo()
+            : null;
+
         String relatorio = relatoriosController.gerarRelatorioMatrizBComPeriodo(
-                mesInicial, anoInicial, mesFinal, anoFinal);
+                mesInicial, anoInicial, mesFinal, anoFinal, idVeiculoFiltro);
 
         areaRelatorio.setText(relatorio);
 
         // Preencher tabela
         List<Veiculo> veiculos = relatoriosController.obterTodosVeiculos();
+
+        // Aplicar filtro de veículo se um veículo específico foi selecionado
+        if (itemSelecionado != null && itemSelecionado.getVeiculo() != null) {
+            veiculos = veiculos.stream()
+                    .filter(v -> v.getIdVeiculo().equals(itemSelecionado.getVeiculo().getIdVeiculo()))
+                    .toList();
+        }
+
         List<Movimentacao> movimentacoes = relatoriosController.obterTodasMovimentacoes();
 
         // Filtrar movimentações por período
@@ -1077,7 +1108,10 @@ public class TelaRelatorios extends JPanel {
         tabelaRelatorio.setModel(modeloTabela);
 
         // Atualizar título do relatório
-        atualizarTituloRelatorio("Matriz B - Custo Médio por Abastecimento/Marca");
+        String tituloVeiculo = (itemSelecionado != null && itemSelecionado.getVeiculo() != null)
+            ? " - " + itemSelecionado.getVeiculo().getPlaca()
+            : "";
+        atualizarTituloRelatorio("Matriz B - Custo Médio por Abastecimento/Marca" + tituloVeiculo);
     }
 
     /**
@@ -1099,13 +1133,27 @@ public class TelaRelatorios extends JPanel {
             return;
         }
 
+        // Obter ID do veículo selecionado (null se "Todos")
+        VeiculoComboItem itemSelecionado = (VeiculoComboItem) cmbVeiculo.getSelectedItem();
+        Long idVeiculoFiltro = (itemSelecionado != null && itemSelecionado.getVeiculo() != null)
+            ? itemSelecionado.getVeiculo().getIdVeiculo()
+            : null;
+
         String relatorio = relatoriosController.gerarRelatorioMatrizCComPeriodo(
-                mesInicial, anoInicial, mesFinal, anoFinal);
+                mesInicial, anoInicial, mesFinal, anoFinal, idVeiculoFiltro);
 
         areaRelatorio.setText(relatorio);
 
         // Preencher tabela
         List<Veiculo> veiculos = relatoriosController.obterTodosVeiculos();
+
+        // Aplicar filtro de veículo se um veículo específico foi selecionado
+        if (itemSelecionado != null && itemSelecionado.getVeiculo() != null) {
+            veiculos = veiculos.stream()
+                    .filter(v -> v.getIdVeiculo().equals(itemSelecionado.getVeiculo().getIdVeiculo()))
+                    .toList();
+        }
+
         List<Movimentacao> movimentacoes = relatoriosController.obterTodasMovimentacoes();
 
         // Filtrar movimentações por período
@@ -1147,7 +1195,10 @@ public class TelaRelatorios extends JPanel {
         tabelaRelatorio.setModel(modeloTabela);
 
         // Atualizar título do relatório
-        atualizarTituloRelatorio("Matriz C - Gasto Total de Abastecimento por Marca");
+        String tituloVeiculo = (itemSelecionado != null && itemSelecionado.getVeiculo() != null)
+            ? " - " + itemSelecionado.getVeiculo().getPlaca()
+            : "";
+        atualizarTituloRelatorio("Matriz C - Gasto Total de Abastecimento por Marca" + tituloVeiculo);
     }
 
     /**
@@ -1169,13 +1220,27 @@ public class TelaRelatorios extends JPanel {
             return;
         }
 
+        // Obter ID do veículo selecionado (null se "Todos")
+        VeiculoComboItem itemSelecionado = (VeiculoComboItem) cmbVeiculo.getSelectedItem();
+        Long idVeiculoFiltro = (itemSelecionado != null && itemSelecionado.getVeiculo() != null)
+            ? itemSelecionado.getVeiculo().getIdVeiculo()
+            : null;
+
         String relatorio = relatoriosController.gerarRelatorioMatrizCompletoComPeriodo(
-                mesInicial, anoInicial, mesFinal, anoFinal);
+                mesInicial, anoInicial, mesFinal, anoFinal, idVeiculoFiltro);
 
         areaRelatorio.setText(relatorio);
 
         // Para o relatório completo, mostrar a Matriz C na tabela (a mais importante)
         List<Veiculo> veiculos = relatoriosController.obterTodosVeiculos();
+
+        // Aplicar filtro de veículo se um veículo específico foi selecionado
+        if (itemSelecionado != null && itemSelecionado.getVeiculo() != null) {
+            veiculos = veiculos.stream()
+                    .filter(v -> v.getIdVeiculo().equals(itemSelecionado.getVeiculo().getIdVeiculo()))
+                    .toList();
+        }
+
         List<Movimentacao> movimentacoes = relatoriosController.obterTodasMovimentacoes();
 
         // Filtrar movimentações por período
@@ -1215,7 +1280,10 @@ public class TelaRelatorios extends JPanel {
         tabelaRelatorio.setModel(modeloTabela);
 
         // Atualizar título do relatório
-        atualizarTituloRelatorio("Relatório Completo - Todas as Matrizes (A, B e C)");
+        String tituloVeiculo = (itemSelecionado != null && itemSelecionado.getVeiculo() != null)
+            ? " - " + itemSelecionado.getVeiculo().getPlaca()
+            : "";
+        atualizarTituloRelatorio("Relatório Completo - Todas as Matrizes (A, B e C)" + tituloVeiculo);
     }
 
     /**

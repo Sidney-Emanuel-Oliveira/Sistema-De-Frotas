@@ -232,7 +232,19 @@ public class VehicleFormDialog extends JDialog {
 
         // Armazenar referência ao campo
         switch (fieldName) {
-            case "txtPlaca" -> txtPlaca = field;
+            case "txtPlaca" -> {
+                txtPlaca = field;
+                // Adicionar listener para converter para UPPERCASE automaticamente
+                txtPlaca.addKeyListener(new java.awt.event.KeyAdapter() {
+                    @Override
+                    public void keyReleased(java.awt.event.KeyEvent e) {
+                        String text = txtPlaca.getText();
+                        int caretPosition = txtPlaca.getCaretPosition();
+                        txtPlaca.setText(text.toUpperCase());
+                        txtPlaca.setCaretPosition(Math.min(caretPosition, txtPlaca.getText().length()));
+                    }
+                });
+            }
             case "txtMarca" -> txtMarca = field;
             case "txtModelo" -> txtModelo = field;
             case "txtAno" -> txtAno = field;
@@ -295,33 +307,78 @@ public class VehicleFormDialog extends JDialog {
 
     private void salvar() {
         try {
-            String placa = txtPlaca.getText().trim();
+            // Converter placa para UPPERCASE automaticamente
+            String placa = txtPlaca.getText().trim().toUpperCase();
             String marca = txtMarca.getText().trim();
             String modelo = txtModelo.getText().trim();
             String ano = txtAno.getText().trim();
             String tipo = (String) cmbTipo.getSelectedItem();
             Boolean ativo = chkAtivo.isSelected();
 
-            // Validações
+            // Validações básicas
             if (placa.isEmpty() || marca.isEmpty() || modelo.isEmpty() || ano.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Preencha todos os campos!", "Erro", JOptionPane.ERROR_MESSAGE);
-                return;
+                throw new IllegalArgumentException("Todos os campos são obrigatórios!");
             }
 
+            // Validação de placa (formato brasileiro)
+            if (!placa.matches("[A-Z]{3}[0-9][A-Z0-9][0-9]{2}")) {
+                throw new IllegalArgumentException("Placa inválida! Use o formato ABC1234 ou ABC1D23 (Mercosul)");
+            }
+
+            // Validação de ano
+            try {
+                int anoInt = Integer.parseInt(ano);
+                int anoAtual = java.time.Year.now().getValue();
+                if (anoInt < 1900 || anoInt > anoAtual + 1) {
+                    throw new IllegalArgumentException("Ano inválido! Deve estar entre 1900 e " + (anoAtual + 1));
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Ano deve ser um número válido!");
+            }
+
+            // Validação de marca e modelo
+            if (marca.length() < 2) {
+                throw new IllegalArgumentException("Marca deve ter pelo menos 2 caracteres!");
+            }
+            if (modelo.length() < 2) {
+                throw new IllegalArgumentException("Modelo deve ter pelo menos 2 caracteres!");
+            }
+
+            // Salvar veículo
             if (veiculoEdicao != null) {
                 controller.atualizarVeiculo(veiculoEdicao.getIdVeiculo(), placa, marca, modelo, ano, ativo, tipo);
-                JOptionPane.showMessageDialog(this, "Veículo atualizado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                    "Veículo atualizado com sucesso!\nPlaca: " + placa,
+                    "Sucesso",
+                    JOptionPane.INFORMATION_MESSAGE);
             } else {
                 controller.salvarVeiculo(placa, marca, modelo, ano, ativo, tipo);
-                JOptionPane.showMessageDialog(this, "Veículo cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                    "Veículo cadastrado com sucesso!\nPlaca: " + placa,
+                    "Sucesso",
+                    JOptionPane.INFORMATION_MESSAGE);
             }
 
             if (onSuccess != null) onSuccess.run();
             dispose();
+
         } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Erro de Validação", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "❌ Erro de Validação:\n" + e.getMessage(),
+                "Erro de Validação",
+                JOptionPane.ERROR_MESSAGE);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao salvar: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                "❌ Erro ao salvar veículo:\n" + e.getMessage() +
+                "\n\nVerifique se não existe outro veículo com a mesma placa.",
+                "Erro de Sistema",
+                JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "❌ Erro inesperado:\n" + e.getMessage(),
+                "Erro",
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 

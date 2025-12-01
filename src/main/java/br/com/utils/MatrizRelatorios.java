@@ -130,6 +130,14 @@ public class MatrizRelatorios {
      * @return Matriz C [m x p]
      */
     public static double[][] gerarMatrizC(double[][] matrizA, double[][] matrizB) {
+        // Validar se as matrizes não estão vazias
+        if (matrizA == null || matrizA.length == 0 || matrizA[0].length == 0) {
+            return new double[0][0];
+        }
+        if (matrizB == null || matrizB.length == 0 || matrizB[0].length == 0) {
+            return new double[0][0];
+        }
+
         int m = matrizA.length;
         int n = matrizA[0].length;
         int p = matrizB[0].length;
@@ -181,6 +189,12 @@ public class MatrizRelatorios {
         sb.append("═══════════════════════════════════════════════════════════════\n");
         sb.append("  ").append(titulo).append("\n");
         sb.append("═══════════════════════════════════════════════════════════════\n\n");
+
+        // Verificar se a matriz está vazia
+        if (matriz == null || matriz.length == 0 || rotulos.isEmpty() || colunas.isEmpty()) {
+            sb.append("Nenhum dado disponível para o período selecionado.\n");
+            return sb.toString();
+        }
 
         // Cabeçalho com colunas
         sb.append(String.format("%-20s", ""));

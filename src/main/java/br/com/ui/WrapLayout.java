@@ -5,125 +5,205 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 /**
- * FlowLayout subclass that fully supports wrapping of components.
- * This layout will wrap components to a new row when the container width is exceeded.
+ * WrapLayout - Layout inteligente que quebra componentes automaticamente
+ *
+ * Esta classe estende FlowLayout para adicionar funcionalidade de quebra automática
+ * de linha quando os componentes não cabem na largura do contêiner.
+ *
+ * Diferença do FlowLayout padrão:
+ * - FlowLayout padrão: Pode criar barra de rolagem horizontal
+ * - WrapLayout: Sempre quebra para nova linha, sem rolagem horizontal
+ *
+ * Uso típico:
+ * - Exibição de cards de veículos
+ * - Galerias de imagens
+ * - Painéis com múltiplos botões
+ *
+ * @author Sidney Emanuel Oliveira
+ * @version 1.0
  */
 public class WrapLayout extends FlowLayout {
 
+    // ==================== CONSTRUTORES ====================
+
+    /**
+     * Cria um WrapLayout com alinhamento centralizado e espaçamento padrão
+     */
     public WrapLayout() {
         super();
     }
 
-    public WrapLayout(int align) {
-        super(align);
+    /**
+     * Cria um WrapLayout com alinhamento específico
+     *
+     * @param alinhamento Uma das constantes: LEFT, CENTER, RIGHT, LEADING ou TRAILING
+     */
+    public WrapLayout(int alinhamento) {
+        super(alinhamento);
     }
 
-    public WrapLayout(int align, int hgap, int vgap) {
-        super(align, hgap, vgap);
+    /**
+     * Cria um WrapLayout com configurações personalizadas
+     *
+     * @param alinhamento Alinhamento dos componentes
+     * @param espacamentoHorizontal Espaço horizontal entre componentes
+     * @param espacamentoVertical Espaço vertical entre componentes
+     */
+    public WrapLayout(int alinhamento, int espacamentoHorizontal, int espacamentoVertical) {
+        super(alinhamento, espacamentoHorizontal, espacamentoVertical);
     }
 
+    // ==================== MÉTODOS SOBRESCRITOS ====================
+
+    /**
+     * Calcula o tamanho preferido do layout considerando quebra de linha
+     *
+     * @param target O contêiner que está sendo ajustado
+     * @return Dimensão preferida do contêiner
+     */
     @Override
     public Dimension preferredLayoutSize(Container target) {
-        return layoutSize(target, true);
+        return calcularTamanhoLayout(target, true);
     }
 
+    /**
+     * Calcula o tamanho mínimo do layout
+     *
+     * @param target O contêiner que está sendo ajustado
+     * @return Dimensão mínima do contêiner
+     */
     @Override
     public Dimension minimumLayoutSize(Container target) {
-        Dimension minimum = layoutSize(target, false);
-        minimum.width -= (getHgap() + 1);
-        return minimum;
+        Dimension tamanhoMinimo = calcularTamanhoLayout(target, false);
+        tamanhoMinimo.width -= (getHgap() + 1);
+        return tamanhoMinimo;
     }
 
-    private Dimension layoutSize(Container target, boolean preferred) {
+    // ==================== CÁLCULOS DE LAYOUT ====================
+
+    /**
+     * Calcula o tamanho do layout baseado nos componentes e quebras de linha
+     *
+     * Algoritmo:
+     * 1. Itera sobre cada componente
+     * 2. Se não couber na linha atual, cria nova linha
+     * 3. Acumula altura total das linhas
+     * 4. Retorna dimensão final
+     *
+     * @param target Contêiner alvo
+     * @param usarTamanhoPreferido Se true, usa tamanho preferido; se false, usa mínimo
+     * @return Dimensão calculada do layout
+     */
+    private Dimension calcularTamanhoLayout(Container target, boolean usarTamanhoPreferido) {
         synchronized (target.getTreeLock()) {
-            // Each row must fit with the width allocated to the container.
-            // When the container width = 0, the preferred width of the container
-            // has not yet been calculated so lets ask for the maximum.
+            // Determina a largura disponível do contêiner
+            // Se a largura for 0, procura o contêiner pai
+            int larguraDisponivel = obterLarguraDisponivel(target);
 
-            int targetWidth = target.getSize().width;
-            Container container = target;
+            // Obtém espaçamentos e margens
+            int espacoHorizontal = getHgap();
+            int espacoVertical = getVgap();
+            Insets margens = target.getInsets();
+            int margensHorizontais = margens.left + margens.right + (espacoHorizontal * 2);
+            int larguraMaximaLinha = larguraDisponivel - margensHorizontais;
 
-            while (container.getSize().width == 0 && container.getParent() != null) {
-                container = container.getParent();
-            }
+            // Dimensão final do contêiner
+            Dimension dimensaoFinal = new Dimension(0, 0);
 
-            targetWidth = container.getSize().width;
+            // Controle da linha atual
+            int larguraLinhaAtual = 0;
+            int alturaLinhaAtual = 0;
 
-            if (targetWidth == 0)
-                targetWidth = Integer.MAX_VALUE;
+            // Itera sobre cada componente
+            int totalComponentes = target.getComponentCount();
+            for (int i = 0; i < totalComponentes; i++) {
+                Component componente = target.getComponent(i);
 
-            int hgap = getHgap();
-            int vgap = getVgap();
-            Insets insets = target.getInsets();
-            int horizontalInsetsAndGap = insets.left + insets.right + (hgap * 2);
-            int maxWidth = targetWidth - horizontalInsetsAndGap;
+                if (componente.isVisible()) {
+                    // Obtém dimensão do componente
+                    Dimension tamanhoComponente = usarTamanhoPreferido
+                        ? componente.getPreferredSize()
+                        : componente.getMinimumSize();
 
-            // Fit components into the allowed width
-            Dimension dim = new Dimension(0, 0);
-            int rowWidth = 0;
-            int rowHeight = 0;
-
-            int nmembers = target.getComponentCount();
-
-            for (int i = 0; i < nmembers; i++) {
-                Component m = target.getComponent(i);
-
-                if (m.isVisible()) {
-                    Dimension d = preferred ? m.getPreferredSize() : m.getMinimumSize();
-
-                    // Can't add the component to current row. Start a new row.
-                    if (rowWidth + d.width > maxWidth) {
-                        addRow(dim, rowWidth, rowHeight);
-                        rowWidth = 0;
-                        rowHeight = 0;
+                    // Verifica se componente cabe na linha atual
+                    if (larguraLinhaAtual + tamanhoComponente.width > larguraMaximaLinha) {
+                        // Não cabe: adiciona linha atual e inicia nova linha
+                        adicionarLinha(dimensaoFinal, larguraLinhaAtual, alturaLinhaAtual);
+                        larguraLinhaAtual = 0;
+                        alturaLinhaAtual = 0;
                     }
 
-                    // Add a horizontal gap for all components after the first
-                    if (rowWidth != 0) {
-                        rowWidth += hgap;
+                    // Adiciona espaço horizontal entre componentes (exceto o primeiro)
+                    if (larguraLinhaAtual != 0) {
+                        larguraLinhaAtual += espacoHorizontal;
                     }
 
-                    rowWidth += d.width;
-                    rowHeight = Math.max(rowHeight, d.height);
+                    // Adiciona componente à linha atual
+                    larguraLinhaAtual += tamanhoComponente.width;
+                    alturaLinhaAtual = Math.max(alturaLinhaAtual, tamanhoComponente.height);
                 }
             }
 
-            addRow(dim, rowWidth, rowHeight);
+            // Adiciona a última linha
+            adicionarLinha(dimensaoFinal, larguraLinhaAtual, alturaLinhaAtual);
 
-            dim.width += horizontalInsetsAndGap;
-            dim.height += insets.top + insets.bottom + vgap * 2;
+            // Adiciona margens ao tamanho final
+            dimensaoFinal.width += margensHorizontais;
+            dimensaoFinal.height += margens.top + margens.bottom + espacoVertical * 2;
 
-            // When using a scroll pane or the DecoratedLookAndFeel we need to
-            // make sure the preferred size is less than the size of the
-            // target container so shrinking the container size works
-            // correctly. Removing the horizontal gap is an easy way to do this.
-
+            // Ajuste especial para JScrollPane
             Container scrollPane = SwingUtilities.getAncestorOfClass(JScrollPane.class, target);
-
             if (scrollPane != null && target.isValid()) {
-                dim.width -= (hgap + 1);
+                dimensaoFinal.width -= (espacoHorizontal + 1);
             }
 
-            return dim;
+            return dimensaoFinal;
         }
     }
 
-    /*
-     *  A new row has been completed. Use the dimensions of this row
-     *  to update the preferred size for the container.
-     *
-     *  @param dim update the width and height when appropriate
-     *  @param rowWidth the width of the row to add
-     *  @param rowHeight the height of the row to add
+    /**
+     * Obtém a largura disponível do contêiner, procurando no contêiner pai se necessário
      */
-    private void addRow(Dimension dim, int rowWidth, int rowHeight) {
-        dim.width = Math.max(dim.width, rowWidth);
+    private int obterLarguraDisponivel(Container target) {
+        int largura = target.getSize().width;
+        Container container = target;
 
-        if (dim.height > 0) {
-            dim.height += getVgap();
+        // Procura contêiner pai com largura definida
+        while (container.getSize().width == 0 && container.getParent() != null) {
+            container = container.getParent();
         }
 
-        dim.height += rowHeight;
+        largura = container.getSize().width;
+
+        // Se ainda não tiver largura, usa valor máximo
+        if (largura == 0) {
+            largura = Integer.MAX_VALUE;
+        }
+
+        return largura;
+    }
+
+    /**
+     * Adiciona uma linha ao cálculo da dimensão final
+     *
+     * Atualiza a largura máxima e altura total considerando
+     * a linha que está sendo adicionada
+     *
+     * @param dimensaoFinal Dimensão sendo calculada
+     * @param larguraLinha Largura da linha a adicionar
+     * @param alturaLinha Altura da linha a adicionar
+     */
+    private void adicionarLinha(Dimension dimensaoFinal, int larguraLinha, int alturaLinha) {
+        // Atualiza largura máxima
+        dimensaoFinal.width = Math.max(dimensaoFinal.width, larguraLinha);
+
+        // Adiciona espaço vertical entre linhas (se não for a primeira)
+        if (dimensaoFinal.height > 0) {
+            dimensaoFinal.height += getVgap();
+        }
+
+        // Adiciona altura da linha
+        dimensaoFinal.height += alturaLinha;
     }
 }
 
